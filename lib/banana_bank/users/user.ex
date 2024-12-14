@@ -8,7 +8,8 @@ defmodule BananaBank.Users.User do
 
   schema "users" do
     field :name, :string
-    field :password, :string, virtual: true # not on db, only app
+    # not on db, only app
+    field :password, :string, virtual: true
     field :password_hash, :string
     field :email, :string
     field :cep, :string
@@ -24,6 +25,7 @@ defmodule BananaBank.Users.User do
     |> validate_required(@required_params)
     |> validate_length(:name, min: 3)
     |> validate_format(:email, ~r/@/)
+    |> unique_constraint(:email, name: :unique_users_email)
     |> validate_length(:cep, is: 8)
     |> add_password_hash()
   end
