@@ -4,7 +4,8 @@ defmodule BananaBank.Users.User do
 
   alias Ecto.Changeset
 
-  @required_params [:name, :password, :email, :cep]
+  @required_params_create [:name, :password, :email, :cep]
+  @required_params_update [:name, :email, :cep]
 
   @derive {Jason.Encoder, only: [:id, :name, :email, :cep]}
   schema "users" do
@@ -18,17 +19,30 @@ defmodule BananaBank.Users.User do
     timestamps()
   end
 
-  # insert/update data
-  # \\ or
-  def changeset(user \\ %__MODULE__{}, params) do
+  # struct empty = create
+  def changeset(params) do
+    %__MODULE__{}
+    |> cast(params, @required_params_create)
+    |> handle_validation(@required_params_create)
+    |> add_password_hash()
+  end
+
+  # struct not empty = update
+  # may have password, so cast as create
+  def changeset(user, params) do
     user
-    |> cast(params, @required_params)
-    |> validate_required(@required_params)
+    |> cast(params, @required_params_create)
+    |> handle_validation(@required_params_update)
+    |> add_password_hash()
+  end
+
+  defp handle_validation(changeset, fields) do
+    changeset
+    |> validate_required(fields)
     |> validate_length(:name, min: 3)
     |> validate_format(:email, ~r/@/)
     |> unique_constraint(:email, name: :unique_users_email)
     |> validate_length(:cep, is: 8)
-    |> add_password_hash()
   end
 
   defp add_password_hash(%Changeset{valid?: true, changes: %{password: password}} = changeset) do
