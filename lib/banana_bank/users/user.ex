@@ -41,6 +41,7 @@ defmodule BananaBank.Users.User do
     |> validate_required(fields)
     |> validate_length(:name, min: 3)
     |> validate_format(:email, ~r/@/)
+    |> validate_length(:password, min: 6)
     |> unique_constraint(:email, name: :unique_users_email)
     |> validate_length(:cep, is: 8)
   end
