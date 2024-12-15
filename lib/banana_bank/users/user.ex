@@ -6,6 +6,7 @@ defmodule BananaBank.Users.User do
 
   @required_params [:name, :password, :email, :cep]
 
+  @derive {Jason.Encoder, only: [:id, :name, :email, :cep]}
   schema "users" do
     field :name, :string
     # not on db, only app
