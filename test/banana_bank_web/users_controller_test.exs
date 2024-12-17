@@ -1,14 +1,21 @@
 defmodule BananaBankWeb.UsersControllerTest do
   use BananaBankWeb.ConnCase
 
+  import Mox
+
   alias BananaBank.Users
   alias Users.User
+  alias BananaBank.ViaCep.ClientMock
+
+  setup :verify_on_exit!
+
+  @cep "12233170"
 
   @valid_params %{
-    name: "Bruno",
-    email: "bruno@bruno.com",
-    password: "coxinha123",
-    cep: "12233170"
+    "name" => "Bruno",
+    "email" => "bruno@bruno.com",
+    "password" => "coxinha123",
+    "cep" => @cep
   }
 
   @invalid_params %{
@@ -18,8 +25,28 @@ defmodule BananaBankWeb.UsersControllerTest do
     cep: "12"
   }
 
+  @cep_body %{
+    "bairro" => "Bosque dos Eucaliptos",
+    "cep" => @cep,
+    "complemento" => "",
+    "ddd" => "12",
+    "estado" => "São Paulo",
+    "gia" => "6452",
+    "ibge" => "3549904",
+    "localidade" => "São José dos Campos",
+    "logradouro" => "Rua Sebastiana Monteiro",
+    "regiao" => "Sudeste",
+    "siafi" => "7099",
+    "uf" => "SP",
+    "unidade" => ""
+  }
+
   describe "create/2" do
     test "successfully creates an user", %{conn: conn} do
+      expect(ClientMock, :call, fn @cep ->
+        {:ok, @cep_body}
+      end)
+
       response =
         conn
         |> post(~p"/api/users", @valid_params)
@@ -27,7 +54,7 @@ defmodule BananaBankWeb.UsersControllerTest do
 
       assert %{
                "data" => %{
-                 "cep" => "12233170",
+                 "cep" => @cep,
                  "email" => "bruno@bruno.com",
                  "id" => _id,
                  "name" => "Bruno"
@@ -37,6 +64,10 @@ defmodule BananaBankWeb.UsersControllerTest do
     end
 
     test "returns an error when attempting to create user with invalid params", %{conn: conn} do
+      expect(ClientMock, :call, fn "12" ->
+        {:ok, ""}
+      end)
+
       response =
         conn
         |> post(~p"/api/users", @invalid_params)
@@ -52,6 +83,10 @@ defmodule BananaBankWeb.UsersControllerTest do
 
   describe "delete/2" do
     test "successfully deletes an user", %{conn: conn} do
+      expect(ClientMock, :call, fn @cep ->
+        {:ok, @cep_body}
+      end)
+
       {:ok, %User{id: id}} = Users.create(@valid_params)
 
       response =
