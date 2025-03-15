@@ -16,7 +16,7 @@ defmodule BananaBank.Users.User do
     field :password_hash, :string
     field :email, :string
     field :cep, :string
-    has_one :account, :Account
+    has_one :account, Account
 
     timestamps()
   end
