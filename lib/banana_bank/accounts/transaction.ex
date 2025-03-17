@@ -7,13 +7,15 @@ defmodule BananaBank.Accounts.Transaction do
   # todo challenge: add fallback response for which not found acc - prob inside case or double tuple with get
   def call(from_account_id, to_account_id, value) do
     with %Account{} = from_account <- Repo.get(Account, from_account_id),
-         %Account{} = to_account <- Repo.get(Account, to_account_id) do
+         %Account{} = to_account <- Repo.get(Account, to_account_id),
+         {:ok, value} <- Decimal.cast(value) do
       Multi.new()
       |> withdraw(from_account, value)
       |> deposit(to_account, value)
       |> Repo.transaction()
     else
       nil -> {:error, :not_found}
+      :error -> {:error, "Invalid value"}
     end
   end
 
