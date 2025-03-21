@@ -6,18 +6,24 @@ defmodule BananaBank.Accounts.Create do
   alias BananaBank.Repo
 
   def call(params) do
-    user = Repo.one(from u in User, where: u.id == ^params["user_id"])
+    user_id = params["user_id"]
 
-    case user do
-      nil ->
-        # Creates an empty changeset
-        changeset = Ecto.Changeset.change(%Account{})
-        {:error, Ecto.Changeset.add_error(changeset, :user_id, "User not found")}
+    if is_nil(user_id) do
+      changeset = Ecto.Changeset.change(%Account{})
+      {:error, Ecto.Changeset.add_error(changeset, :user_id, "User ID is required")}
+    else
+      user = Repo.one(from u in User, where: u.id == ^user_id)
 
-      _user ->
-        params
-        |> Account.changeset()
-        |> Repo.insert()
+      case user do
+        nil ->
+          changeset = Ecto.Changeset.change(%Account{})
+          {:error, Ecto.Changeset.add_error(changeset, :user_id, "User not found")}
+
+        _user ->
+          params
+          |> Account.changeset()
+          |> Repo.insert()
+      end
     end
   end
 end
