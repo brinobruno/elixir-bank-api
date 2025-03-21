@@ -6,6 +6,7 @@ defmodule BananaBank.Users.UserTest do
   alias BananaBank.Users
   alias BananaBank.Users.User
   alias BananaBank.ViaCep.ClientMock
+  alias BananaBank.Repo
 
   setup :verify_on_exit!
 
@@ -35,16 +36,50 @@ defmodule BananaBank.Users.UserTest do
     test "successfully creates a user changeset" do
       params = %{
         "name" => "John Doe",
-        "email" => "john@doe",
+        "email" => "john@doe.com",
         "password" => "123456",
         "cep" => "29560000"
       }
 
       response = Users.Create.call(params)
 
-      # assert {:ok, user} = response
-
-      # User.changeset(response)
+      assert {:ok, user} = response
+      assert user.name == "John Doe"
+      assert user.email == "john@doe.com"
+      assert user.cep == "29560000"
+      assert is_binary(user.password_hash)
     end
+
+    test "fails to create a user with missing fields" do
+      params = %{
+        "name" => "John Doe",
+        "password" => "123456",
+        "cep" => "29560000"
+      }
+
+      response = Users.Create.call(params)
+
+      assert {:error, changeset} = response
+      assert "can't be blank" in errors_on(changeset).email
+    end
+
+    test "fails to create a user with invalid email format" do
+      params = %{
+        "name" => "John Doe",
+        "email" => "invalid-email",
+        "password" => "123456",
+        "cep" => "29560000"
+      }
+
+      response = Users.Create.call(params)
+
+      assert {:error, changeset} = response
+      assert "has invalid format" in errors_on(changeset).email
+    end
+  end
+
+  # Utility function to extract errors from a changeset
+  defp errors_on(changeset) do
+    Ecto.Changeset.traverse_errors(changeset, fn {msg, _opts} -> msg end)
   end
 end
