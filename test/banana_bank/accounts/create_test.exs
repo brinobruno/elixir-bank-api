@@ -54,6 +54,77 @@ defmodule BananaBank.Accounts.CreateTest do
       assert Decimal.to_integer(account.balance) == 0
     end
 
+    test "cannot create an account with negative balance" do
+      user_params = %{
+        "name" => "John Doe",
+        "email" => "john@doe",
+        "password" => "123456",
+        "cep" => "29560000"
+      }
+
+      {:ok, user} = Users.Create.call(user_params)
+
+      account_params = %{
+        "user_id" => user.id,
+        "balance" => -1
+      }
+
+      account_response = Accounts.Create.call(account_params)
+
+      assert {:error, %Ecto.Changeset{
+        errors: [
+          balance: {"is invalid", [constraint: :check, constraint_name: "balance_must_be_positive"]}
+        ]
+      }} = account_response
+    end
+
+    test "cannot create an account with invalid params" do
+      user_params = %{
+        "name" => "John Doe",
+        "email" => "john@doe",
+        "password" => "123456",
+        "cep" => "29560000"
+      }
+
+      {:ok, user} = Users.Create.call(user_params)
+
+      account_params = %{
+        "user_id" => user.id,
+        "balance" => "test"
+      }
+
+      account_response = Accounts.Create.call(account_params)
+
+      assert {:error, %Ecto.Changeset{
+        errors: [
+          balance: {"is invalid", [type: :decimal, validation: :cast]}
+        ]
+      }} = account_response
+    end
+
+    test "cannot create an account with missing params" do
+      user_params = %{
+        "name" => "John Doe",
+        "email" => "john@doe",
+        "password" => "123456",
+        "cep" => "29560000"
+      }
+
+      {:ok, user} = Users.Create.call(user_params)
+
+      account_params = %{
+        "user_id" => user.id
+      }
+
+      account_response = Accounts.Create.call(account_params)
+
+      assert {:error, %Ecto.Changeset{
+        errors: [
+          balance: {"can't be blank", [validation: :required]}
+        ]
+      }} = account_response
+    end
+
     test "cannot create an account with user not found" do
       params = %{
         "user_id" => 999999,
